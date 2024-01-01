@@ -3,8 +3,9 @@
 /* Example: node trimMixes.js timestamp.txt mix.mp3 (see README.md for an example on usage of timestamps)
 */
 
-const fs = require("fs")
 const exec = require("child_process").exec
+const path = require("path")
+const fs = require("fs")
 
 const timestampFile = process.argv[2]
 const inputAudioFile = process.argv[3]
@@ -41,21 +42,23 @@ timestamps.map((timestamp, index) => {
             seconds: typeof timeNextSongSplit[2] == "string" ? timeNextSongSplit[2].split(" ")[0] : 0,
         }
     }
-
+    
     tempArray.push(tempObject)
 })
 
 tempArray.pop()
+
+const outputFolder = path.dirname(inputAudioFile)
+
 tempArray.forEach((song, index) => {
-    const title = `${index + 1} ${song.title}`
+    const title = `${index + 1 < 10 ? "0" + (index + 1) : index + 1} ${song.title}`
     const start = song.start.hours + ":" + song.start.minutes + ":" + song.start.seconds
     const end = song.end.hours + ":" + song.end.minutes + ":" + song.end.seconds
     
-    const command = `ffmpeg.exe -i ${inputAudioFile} -ss ${start} -to ${end} -c copy "${title}.${getExtension(inputAudioFile)}"`
+    const command = `ffmpeg.exe -i "${inputAudioFile}" -ss ${start} -to ${end} -c copy "${outputFolder}/${title}.${getExtension(inputAudioFile)}"`
+    const childProcess = exec(command)
     
-    exec(command)
-        .on("spawn", (childProcess) => {
-            console.log(`Executing: ${command}`)
-        })
-        .on("error", (err) => console.error(err))
-})
+    childProcess.on("spawn", () => {
+        console.log(`Executing: ${command}`)
+    })
+});
